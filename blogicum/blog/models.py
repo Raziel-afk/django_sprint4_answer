@@ -64,6 +64,7 @@ class Post(BaseModel):
     class Meta:
         verbose_name = "публикация"
         verbose_name_plural = "Публикации"
+        ordering = ('-pub_date',)
 
     def get_absolute_url(self):
         return reverse_lazy('blog:post_detail', kwargs={'post_id': self.pk})
