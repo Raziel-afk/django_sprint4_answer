@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from django.views.generic import ListView, CreateView, UpdateView, \
     DetailView, DeleteView
 
-from .forms import CommentForm
+from .forms import CommentForm, PostForm
 from .models import Post, Category, Comment
 
 User = get_user_model()
@@ -22,10 +22,16 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
 
     def get_queryset(self):
-        return (Post.objects
-                .select_related('category', 'author', 'location')
-                .filter(Q(is_published=True, category__is_published=True,
-                          pub_date__lte=now()) | Q(author=self.request.user)))
+        published_filter = Q(is_published=True, category__is_published=True,
+                           pub_date__lte=now())
+        if self.request.user.is_authenticated:
+            return (Post.objects
+                    .select_related('category', 'author', 'location')
+                    .filter(published_filter | Q(author=self.request.user)))
+        else:
+            return (Post.objects
+                    .select_related('category', 'author', 'location')
+                    .filter(published_filter))
 
     def get_context_data(self, **kwargs):
         context = super(PostDetailView, self).get_context_data(**kwargs)
@@ -47,15 +53,8 @@ class PostMixin:
 
 
 class PostFormMixin(PostMixin):
-    fields = ('title', 'text', 'pub_date', 'location', 'category', 'image')
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields['pub_date'].widget = forms.DateTimeInput(
-            format='%Y-%m-%dT%H:%M',
-            attrs={'type': 'datetime-local'})
-
-        return form
+    form_class = PostForm
+    fields = None
 
 
 class PostEditMixin:
