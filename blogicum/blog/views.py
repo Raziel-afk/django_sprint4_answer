@@ -54,7 +54,6 @@ class PostMixin:
 
 class PostFormMixin(PostMixin):
     form_class = PostForm
-    fields = None
 
 
 class PostEditMixin:
